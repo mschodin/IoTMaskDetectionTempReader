@@ -7,7 +7,9 @@
     "@trbll/nodeimu": "^1.0.0",
     "@trbll/sense-hat-led": "^1.0.0",
     "firebase": "^8.2.9",
-    "node-ble": "*"
+    "node-ble": "*",
+	"@tensorflow/tfjs": "*",
+	"@teachablemachine/image": "*"
   },
   "devDependencies": {},
   "scripts": {

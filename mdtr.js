@@ -1,9 +1,11 @@
+var web = require("./WebcamClassifier");
 // as found by running the 'scan on' command in bluetoothctl
 var firebase = require('firebase/app');
 require('firebase/database');
 var nodeimu = require('@trbll/nodeimu');
 var IMU = new nodeimu.IMU();
 var sense = require('@trbll/sense-hat-led');
+
 
 // Your web app's Firebase configuration
 var firebaseConfig = {
