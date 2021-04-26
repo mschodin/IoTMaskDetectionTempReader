@@ -12,7 +12,6 @@ import numpy as np
 import cv2
 import os
 
-# TODO: Initialize Database
 
 
 # Initialize outputs for green and red leds
@@ -34,25 +33,31 @@ data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
 # Resize the image to a 224x224 with the same strategy as in TM2:
 # Resizing the image to be at least 224x224 and then cropping from the center
 size = (224, 224)
-# Initialize camera 
+# Initialize camera (uses default camera)
 cap = cv2.VideoCapture(0)
 
 # Main loop that runs in a while loop until scan is ready
 def main():
-    temp = 0
-    while temp < 95:
-        # TODO: scan for high temp
-        sleep(.05)
-        temp = 100
-    scan_person()
+    while True:
+        try:
+            temp = 0
+            while temp < 95:
+                # TODO: scan for high temp
+                sleep(.05)
+                temp = 100
+            scan_person()
+        except KeyboardInterrupt:
+            cap.release()
+            break
 
 # Collects mask data, temp data, time of day, and determines if entry is allowed. Pushes info to db
 def scan_person():
     average_temp = read_average_temp()
     has_mask = check_for_mask()
     allow_entry = True
-    if average_temp >= 100 or has_mask == False:
+    if average_temp >= 100 or not has_mask:
         allow_entry = False
+    print(has_mask)
     current_time = datetime.now()
     # TODO: Upload current_time, average_temp, has_mask, and allow_entry to database
     if allow_entry:
@@ -63,21 +68,19 @@ def scan_person():
         GPIO.output(red_LED, GPIO.HIGH)
         sleep(3)
         GPIO.output(red_LED, GPIO.LOW)
-    main()
     
 # TODO: Reads average temperature of hottest point in scan
 def read_average_temp():
     return 101
 
-# TODO: Reads from camera and determines if scanned person is wearing a mask, returns true if mask is worn, false if not
+# Reads from camera and determines if scanned person is wearing a mask, returns true if mask is worn, false if not
 def check_for_mask():
-    has_mask = 0
-    for x in range(0,30):
+    prediction = []
+    for x in range(0,20):
         # Capture frame-by-frame
         ret, frame = cap.read()
 
         # Our operations on the frame come here
-        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         resized = cv2.resize(frame, size, interpolation = cv2.INTER_AREA)
 
         # Normalize the image
@@ -86,11 +89,14 @@ def check_for_mask():
         # Load the image into the array
         data[0] = normalized_image_array
 
-        prediction = model.predict(data)
-        if prediction == 'Mask':
-            has_mask += 1
-            
-    return True if has_mask >= 15 else False
+        # Returns array of 2 values. Index 0 = mask probability | Index 1 = no mask probability
+        prediction.append(model.predict(data)[0][0])
+        
+    # cv2.imwrite('test.jpg',frame)
+    # print(len(prediction))
+    output = sum(prediction)/float(len(prediction))
+    # print(output)
+    return True if output >= 0.7 else False
 
 if __name__ == "__main__":
     main()
