@@ -20,11 +20,13 @@ sudo apt-get install libhdf5-dev libc-ares-dev libeigen3-dev
 sudo apt-get install libatlas-base-dev libopenblas-dev libblas-dev
 sudo apt-get install openmpi-bin libopenmpi-dev
 sudo apt-get install liblapack-dev cython
+sudo apt-get install fswebcam
 pip3 install keras_applications==1.0.8 --no-deps
 pip3 install keras_preprocessing==1.1.0 --no-deps
 pip3 install -U six wheel mock
 pip3 install pybind11
 pip3 install h5py==2.10.0
+pip3 install opencv-python
 ### upgrade setuptools 40.8.0 -> 52.0.0
 pip3 install --upgrade setuptools
 
