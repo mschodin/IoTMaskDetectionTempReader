@@ -55,6 +55,16 @@ sender_email = "noreply.mask.detection.alert@gmail.com"  # Enter your address
 receiver_email = "noreply.mask.detection.alert@gmail.com"  # Enter receiver address
 password = input("Type your password and press enter: ")
 
+# InfluxDB Init
+token = "P7SENJDBCC_VSxiaHTP6phlnljd4ubocxnN4KR7s2uVjmjW_vJVLNXWlQFQpCk9onbFCYEW8dG7-MWFYhTUg3Q=="
+org = "awjung2000@comcast.net"
+bucket = "IoTProject"
+
+client = InfluxDBClient(url="https://us-central1-1.gcp.cloud2.influxdata.com/", token=token)
+
+write_api = client.write_api(write_options=SYNCHRONOUS)
+
+
 # Main loop that runs in a while loop until scan is ready
 def main():
     while True:
@@ -99,6 +109,9 @@ def scan_person():
         sleep(3)
         GPIO.output(red_LED, GPIO.LOW)
     
+    point = Point("mem").tag("host", "host1").field("temperature", average_temp).time(datetime.utcnow(), WritePrecision.NS)
+    write_api.write(bucket, org, point)
+    
 # TODO: Reads average temperature of hottest point in scan
 def read_average_temp():
     average = 0.0
@@ -137,18 +150,8 @@ def check_for_mask():
     # print(output)
     return True if output >= 0.7 else False
 
+
 if __name__ == "__main__":
     main()
 
-# InfluxDB Init
-token = "P7SENJDBCC_VSxiaHTP6phlnljd4ubocxnN4KR7s2uVjmjW_vJVLNXWlQFQpCk9onbFCYEW8dG7-MWFYhTUg3Q=="
-org = "awjung2000@comcast.net"
-bucket = "IoTProject"
 
-client = InfluxDBClient(url="https://us-central1-1.gcp.cloud2.influxdata.com/", token=token)
-
-write_api = client.write_api(write_options=SYNCHRONOUS)
-
-point = Point("mem").tag("host", "host1").field("temperature", 30.0).time(datetime.utcnow(), WritePrecision.NS)
-
-write_api.write(bucket, org, point)
