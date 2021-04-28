@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+# Imports
+import time
+import busio
+import board
+import adafruit_amg88xx
 # General Lifecycle Imports
 from time import sleep
 from datetime import datetime
@@ -16,10 +21,13 @@ import os
 
 
 # Initialize outputs for green and red leds
-# TODO: Change pin below to correct pin
-green_LED = 18
-red_LED = 19
-GPIO.setmode(GPIO.BOARD)
+i2c = busio.I2C(board.SCL, board.SDA)
+amg = adafruit_amg88xx.AMG88XX(i2c)
+threshold = 32 #celcius, F = ~90
+fever = 38 # F = ~100
+green_LED = 27
+red_LED = 17
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(green_LED, GPIO.OUT)
 GPIO.setup(red_LED, GPIO.OUT)
 
@@ -61,9 +69,10 @@ def main():
 # Collects mask data, temp data, time of day, and determines if entry is allowed. Pushes info to db
 def scan_person():
     average_temp = read_average_temp()
+    print(average_temp)
     has_mask = check_for_mask()
     allow_entry = True
-    if average_temp >= 100 or not has_mask:
+    if average_temp >= fever or not has_mask:
         allow_entry = False
     print(has_mask)
     current_time = datetime.now()
@@ -89,7 +98,16 @@ def scan_person():
     
 # TODO: Reads average temperature of hottest point in scan
 def read_average_temp():
-    return 101
+    average = 0.0
+    counter = 0
+    for row in amg.pixels:
+        for temp in row:
+            if temp > threshold:
+                average += temp
+                counter += 1
+    if counter != 0:
+        average = average/counter
+    return average
 
 # Reads from camera and determines if scanned person is wearing a mask, returns true if mask is worn, false if not
 def check_for_mask():
