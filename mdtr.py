@@ -17,7 +17,10 @@ from PIL import Image, ImageOps
 import numpy as np
 import cv2
 import os
-
+# InfluxDB imports
+from datetime import datetime
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 
 # Initialize outputs for green and red leds
@@ -137,3 +140,15 @@ def check_for_mask():
 if __name__ == "__main__":
     main()
 
+# InfluxDB Init
+token = "P7SENJDBCC_VSxiaHTP6phlnljd4ubocxnN4KR7s2uVjmjW_vJVLNXWlQFQpCk9onbFCYEW8dG7-MWFYhTUg3Q=="
+org = "awjung2000@comcast.net"
+bucket = "IoTProject"
+
+client = InfluxDBClient(url="https://us-central1-1.gcp.cloud2.influxdata.com/", token=token)
+
+write_api = client.write_api(write_options=SYNCHRONOUS)
+
+point = Point("mem").tag("host", "host1").field("temperature", 30.0).time(datetime.utcnow(), WritePrecision.NS)
+
+write_api.write(bucket, org, point)
