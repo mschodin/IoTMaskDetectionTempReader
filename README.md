@@ -58,10 +58,6 @@ sudo apt-get install openmpi-bin libopenmpi-dev
 
 sudo apt-get install liblapack-dev cython
 
-pip3 install keras_applications==1.0.8 --no-deps
-
-pip3 install keras_preprocessing==1.1.0 --no-deps
-
 pip3 install -U six wheel mock
 
 pip3 install pybind11
