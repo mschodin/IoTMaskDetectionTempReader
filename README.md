@@ -69,3 +69,5 @@ pip3 install pybind11
 ### upgrade setuptools 40.8.0 -> 52.0.0
 pip3 install --upgrade setuptools
 
+## InlfuxDB setup
+pip install influxdb-client
