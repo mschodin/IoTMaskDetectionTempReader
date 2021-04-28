@@ -3,6 +3,7 @@
 # General Lifecycle Imports
 from time import sleep
 from datetime import datetime
+import smtplib, ssl
 # RPi Output Pin Imports
 import RPi.GPIO as GPIO
 # Mask Detection Camera Imports
@@ -36,6 +37,13 @@ size = (224, 224)
 # Initialize camera (uses default camera)
 cap = cv2.VideoCapture(0)
 
+# Email Setup
+port = 465  # For SSL
+smtp_server = "smtp.gmail.com"
+sender_email = "noreply.mask.detection.alert@gmail.com"  # Enter your address
+receiver_email = "noreply.mask.detection.alert@gmail.com"  # Enter receiver address
+password = input("Type your password and press enter: ")
+
 # Main loop that runs in a while loop until scan is ready
 def main():
     while True:
@@ -65,6 +73,16 @@ def scan_person():
         sleep(3)
         GPIO.output(green_LED, GPIO.LOW)
     else:
+        message = """\
+        Subject: ENTRY ALERT
+
+        An unsafe customer is entering your property. Has Mask: """ + has_mask + """ Temperature: """ + str(average_temp)
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message)
+            
         GPIO.output(red_LED, GPIO.HIGH)
         sleep(3)
         GPIO.output(red_LED, GPIO.LOW)
