@@ -109,7 +109,7 @@ def scan_person():
         sleep(3)
         GPIO.output(red_LED, GPIO.LOW)
     
-    point = Point("mem").tag("host", "host1").field("temperature", average_temp).time(datetime.utcnow(), WritePrecision.NS)
+    point = Point("mem").tag("host", "host1").field("temperature",average_temp,"mask",has_mask).time(datetime.utcnow(), WritePrecision.NS)
     write_api.write(bucket, org, point)
     
 # TODO: Reads average temperature of hottest point in scan
