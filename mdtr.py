@@ -21,11 +21,19 @@ import os
 from datetime import datetime
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--thermal", help="boolean to turn on or off thermal camera", action="store_false")
+args = parser.parse_args()
 
 # Initialize outputs for green and red leds
-i2c = busio.I2C(board.SCL, board.SDA)
-amg = adafruit_amg88xx.AMG88XX(i2c)
+i2c = None
+amg = None
+if args.thermal:
+    i2c = busio.I2C(board.SCL, board.SDA)
+    amg = adafruit_amg88xx.AMG88XX(i2c)
+
 threshold = 32 #celcius, F = ~90
 fever = 38 # F = ~100
 green_LED = 27
@@ -72,17 +80,15 @@ def main():
             temp = 0
             while temp < 95:
                 # TODO: scan for high temp
-                sleep(.05)
-                temp = 100
-            scan_person()
+                sleep(.5)
+                temp = read_average_temp()
+            scan_person(temp)
         except KeyboardInterrupt:
             cap.release()
             break
 
 # Collects mask data, temp data, time of day, and determines if entry is allowed. Pushes info to db
-def scan_person():
-    average_temp = read_average_temp()
-    print(average_temp)
+def scan_person(average_temp):
     has_mask = check_for_mask()
     allow_entry = True
     if average_temp >= fever or not has_mask:
@@ -98,22 +104,30 @@ def scan_person():
         message = """\
         Subject: ENTRY ALERT
 
-        An unsafe customer is entering your property. Has Mask: """ + has_mask + """ Temperature: """ + str(average_temp)
+        An unsafe customer is entering your property. Has Mask: """ + str(has_mask) + """ Temperature: """ + str(average_temp)
 
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message)
-            
+            try:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message)
+            except Exception as ex:
+                print('Unable to login to email server: ', ex)
+
         GPIO.output(red_LED, GPIO.HIGH)
         sleep(3)
         GPIO.output(red_LED, GPIO.LOW)
     
-    point = Point("mem").tag("host", "host1").field("temperature",average_temp,"mask",has_mask).time(datetime.utcnow(), WritePrecision.NS)
-    write_api.write(bucket, org, point)
-    
+    try:
+        point = Point("mem").tag("host", "host1").field("temperature",average_temp,"mask",has_mask).time(datetime.utcnow(), WritePrecision.NS)
+        write_api.write(bucket, org, point)
+    except Exception as ex:
+        print('Unable to write to InfluxDB: ', ex)
+
 # TODO: Reads average temperature of hottest point in scan
 def read_average_temp():
+    if amg == None:
+        return 96
     average = 0.0
     counter = 0
     for row in amg.pixels:
