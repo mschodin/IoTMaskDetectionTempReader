@@ -30,7 +30,7 @@ if args.thermal:
     i2c = busio.I2C(board.SCL, board.SDA)
     amg = adafruit_amg88xx.AMG88XX(i2c)
 
-threshold = 32 #celcius, F = ~90
+threshold = 25 #celcius, F = ~90
 fever = 38 # F = ~100
 green_LED = 27
 red_LED = 17
@@ -65,12 +65,14 @@ password = input("Type your password and press enter: ")
 def main():
     while True:
         try:
-            temp = 0
-            while temp < 95:
-                # TODO: scan for high temp
-                sleep(.5)
-                temp = read_average_temp()
+            print("yay")
+            temp = read_average_temp()
+            # while temp < 95:
+            #     # TODO: scan for high temp
+            #     sleep(.5)
+            #     temp = read_average_temp()
             scan_person(temp)
+            print("yay2")
         except KeyboardInterrupt:
             cap.release()
             break
@@ -91,7 +93,6 @@ def scan_person(average_temp):
     else:
         message = """\
         Subject: ENTRY ALERT
-
         An unsafe customer is entering your property. Has Mask: """ + str(has_mask) + """ Temperature: """ + str(average_temp)
 
         context = ssl.create_default_context()
@@ -154,5 +155,3 @@ def check_for_mask():
 
 if __name__ == "__main__":
     main()
-
-
