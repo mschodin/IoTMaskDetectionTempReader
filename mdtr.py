@@ -17,10 +17,6 @@ from PIL import Image, ImageOps
 import numpy as np
 import cv2
 import os
-# InfluxDB imports
-from datetime import datetime
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -34,7 +30,7 @@ if args.thermal:
     i2c = busio.I2C(board.SCL, board.SDA)
     amg = adafruit_amg88xx.AMG88XX(i2c)
 
-threshold = 32 #celcius, F = ~90
+threshold = 25 #celcius, F = ~90
 fever = 38 # F = ~100
 green_LED = 27
 red_LED = 17
@@ -63,26 +59,20 @@ sender_email = "noreply.mask.detection.alert@gmail.com"  # Enter your address
 receiver_email = "noreply.mask.detection.alert@gmail.com"  # Enter receiver address
 password = input("Type your password and press enter: ")
 
-# InfluxDB Init
-token = "P7SENJDBCC_VSxiaHTP6phlnljd4ubocxnN4KR7s2uVjmjW_vJVLNXWlQFQpCk9onbFCYEW8dG7-MWFYhTUg3Q=="
-org = "awjung2000@comcast.net"
-bucket = "IoTProject"
-
-client = InfluxDBClient(url="https://us-central1-1.gcp.cloud2.influxdata.com/", token=token)
-
-write_api = client.write_api(write_options=SYNCHRONOUS)
 
 
 # Main loop that runs in a while loop until scan is ready
 def main():
     while True:
         try:
-            temp = 0
-            while temp < 95:
-                # TODO: scan for high temp
-                sleep(.5)
-                temp = read_average_temp()
+            print("yay")
+            temp = read_average_temp()
+            # while temp < 95:
+            #     # TODO: scan for high temp
+            #     sleep(.5)
+            #     temp = read_average_temp()
             scan_person(temp)
+            print("yay2")
         except KeyboardInterrupt:
             cap.release()
             break
@@ -103,7 +93,6 @@ def scan_person(average_temp):
     else:
         message = """\
         Subject: ENTRY ALERT
-
         An unsafe customer is entering your property. Has Mask: """ + str(has_mask) + """ Temperature: """ + str(average_temp)
 
         context = ssl.create_default_context()
@@ -119,8 +108,7 @@ def scan_person(average_temp):
         GPIO.output(red_LED, GPIO.LOW)
     
     try:
-        point = Point("mem").tag("host", "host1").field("temperature",average_temp,"mask",has_mask).time(datetime.utcnow(), WritePrecision.NS)
-        write_api.write(bucket, org, point)
+        os.system('python3 second.py --temp ' + str(average_temp) +' --mask ' +str(has_mask))
     except Exception as ex:
         print('Unable to write to InfluxDB: ', ex)
 
@@ -167,5 +155,3 @@ def check_for_mask():
 
 if __name__ == "__main__":
     main()
-
-
