@@ -77,15 +77,18 @@ write_api = client.write_api(write_options=SYNCHRONOUS)
 def main():
     while True:
         try:
-            temp = 0
-            while temp < 95:
-                # TODO: scan for high temp
-                sleep(.5)
-                temp = read_average_temp()
-            scan_person(temp)
+            temp = read_average_temp()
+            if temp >= threshold:
+                GPIO.output(green_LED, GPIO.HIGH)
+                GPIO.output(red_LED, GPIO.HIGH)
+                sleep(1)
+                GPIO.output(green_LED, GPIO.LOW)
+                GPIO.output(red_LED, GPIO.LOW)
+                scan_person(temp)
         except KeyboardInterrupt:
             cap.release()
             break
+        sleep(.5)
 
 # Collects mask data, temp data, time of day, and determines if entry is allowed. Pushes info to db
 def scan_person(average_temp):
